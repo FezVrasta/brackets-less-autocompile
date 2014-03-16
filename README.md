@@ -2,9 +2,24 @@
 
 LESS AutoCompile is an extension for the code editor Brackets that adds automatic compilation of LESS files upon saving and displays any errors that might occur. LESS AutoCompile is installed from the Package Manager that is included in Brackets.
 
+To compile the file into a custom output file, add the following line to the beginning of the less file:
+
+  // out: NEWFILE.css
+
+To tell the extension to compile another file instead of this one (typically used for imported files), add the following line instead:
+
+  // main: MAINFILE.less
+
+You can also specify custom compiler settings in this line (this can be combined with out but not with main):
+
+  // compress: true, strictMath: true
+
 ### Acknowledgements
 
-Thanks to James Lawrence for enabling relative imports in less.
+* Thanks to [James Lawrence](https://github.com/jlaw90) for enabling relative imports in less.
+* Thanks to [Martin Zagora](https://github.com/zaggino) for adding the less verison number to the output.
+* Thanks to [Dimitar S.](https://github.com/deemeetar) for allowing users to specify a custom output path.
+* Thanks to [FezVrasta](https://github.com/FezVrasta) for tweaking the less compiler settings.
 
 ### License
 The MIT License (MIT)

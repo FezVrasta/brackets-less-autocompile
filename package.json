@@ -6,8 +6,11 @@
     "version": "1.1.0",
     "author": "Jonathan Diehl <jonathan.diehl@gmail.com>",
     "contributors": [
-        "James Lawrence"
-    ]
+        "James Lawrence (https://github.com/jlaw90)",
+        "Martin Zagora (https://github.com/zaggino)",
+        "Dimitar S. (https://github.com/deemeetar)",
+        "FezVrasta (https://github.com/FezVrasta)"
+    ],
     "license": "MIT",
     "engines": {
         "brackets": ">=0.31.0"
