@@ -5,51 +5,56 @@ maxerr: 50, browser: true */
 define(function (require, exports, module) {
 	"use strict";
 
-    var CodeInspection     = brackets.getModule("language/CodeInspection"),
-    	NativeFileSystem   = brackets.getModule("file/NativeFileSystem").NativeFileSystem,
-        FileUtils          = brackets.getModule("file/FileUtils");
+	var AppInit        = brackets.getModule("utils/AppInit"),
+		ExtensionUtils = brackets.getModule("utils/ExtensionUtils"),
+		NodeConnection = brackets.getModule("utils/NodeConnection"),
+		CodeInspection     = brackets.getModule("language/CodeInspection");
 
-    // convert errors
-    function convertErrors(input) {
-        var i, error, errors = [];
-        for (i in input) {
-            error = input[i];
-            errors.push({
-                pos: { line: error.line - 1, ch: error.column - 1 },
-                message: error.message,
-                type: CodeInspection.Type.ERROR
-            });
+	// connect to the node server
+	function connect(callback) {
+		var connection = new NodeConnection();
+		var promise = connection.connect(true);
+		promise.fail(function (err) {
+			callback("Could not connect to node server: " + err);
+		});
+		promise.done(function () {
+			callback(null, connection);
+		});
+	}
 
-        }
-        return { errors: errors };
-    }
+	function loadNodeModule(moduleName, callback) {
+		connect(function (err, connection) {
+			if (err) {
+				callback(err);
+				return;
+			}
 
-    // write css output
-    function writeCSS(text, fullPath) {
-    	var extIndex, cssPath, fileEntry;
-    	extIndex = fullPath.lastIndexOf(".");
-    	cssPath =  (extIndex > 0 ? fullPath.substr(0, extIndex) : cssPath) + ".css";
-    	fileEntry = new NativeFileSystem.FileEntry(cssPath);
-    	return FileUtils.writeText(fileEntry, text);
-    }
+			var path = ExtensionUtils.getModulePath(module, "node/" + moduleName);
+			var promise = connection.loadDomains([path], true);
+			promise.fail(function (err) {
+				callback("Could not load node module " + moduleName + ": " + err);
+			});
+			promise.done(function () {
+				callback(null, connection.domains[moduleName]);
+			});
+		});
+	}
 
     // compile a less file
     function compileLess(text, fullPath) {
-		var parser = new less.Parser({
-			filename: FileUtils.getBaseName(fullPath),
-			paths: [FileUtils.getDirectoryPath(fullPath)]
-		});
-		var result = null;
-		parser.parse(text, function (err, tree) {
+
+    	var deferred = $.Deferred();
+
+		// connect to the node server
+		loadNodeModule("LessCompiler", function (err, compiler) {
 			if (err) {
-				result = convertErrors([err]);
-			} else {
-				writeCSS(tree.toCSS(), fullPath).fail(function (err) {
-    				console.info("Could not write css output to " + fullPath, err);
-    			});		
+				console.error(err);
+				return;
 			}
+			compiler.compile(fullPath).then(deferred.resolve.bind(deferred), deferred.reject.bind(deferred));
 		});
-		return result;
+
+		return deferred.promise();
     }
 
     // register as code inspector for less files
